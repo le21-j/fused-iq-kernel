@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# EXIT check for P3-PROMPT-3 (GPU-gated):
+# `make build` compiles the CUDA extension; op imports and runs on CUDA.
+# On a non-CUDA host this check PARKS (exit 2). Never fabricate a build.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+PY=${PY:-.venv/bin/python}
+
+if ! command -v nvcc >/dev/null || ! $PY -c "import torch; raise SystemExit(0 if torch.cuda.is_available() else 1)"; then
+  echo "GPU_STEP: ready for remote build. EXIT parked (no nvcc/CUDA on this host)."
+  exit 2
+fi
+
+make build
+
+$PY - <<'EOF'
+import torch
+import fused_iq_cuda_ext  # noqa: F401 — registers torch.ops.fused_iq_cuda.fused_stage
+from baseline.reference import IQClassifier
+
+m = IQClassifier().cuda()
+x = torch.randn(2, 1, 256, dtype=torch.complex64, device="cuda")
+out = torch.ops.fused_iq_cuda.fused_stage(x, m.Wr, m.Wi, m.br, m.bi)
+ref = m.fused_stage(x)
+assert out.shape == ref.shape == (2, 16, 242), out.shape
+torch.testing.assert_close(out, ref, atol=1e-4, rtol=0)
+print("EXIT CHECK P3-PROMPT-3: PASS")
+EOF

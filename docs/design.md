@@ -95,7 +95,54 @@ This exactly mirrors `torch.nn.functional.conv1d`'s accumulation order, which is
 
 ## CUDA thread/block mapping
 
-*(Prompt 3)*
+### Grid / block scheme
+
+```
+block = (256, 1, 1)          — 256 threads along the L_out dimension
+grid  = (cdiv(L_out, 256), C_out, B)
+          blockIdx.x  -> position tile  (l = blockIdx.x*256 + threadIdx.x)
+          blockIdx.y  -> output channel co
+          blockIdx.z  -> batch index b
+```
+
+Each thread owns exactly one output element `out[b, co, l]`.  The early-exit guard `if (l >= L_out) return;` handles the final partial tile.
+
+### float2 reinterpret trick and coalesced loads
+
+PyTorch stores `complex64` as contiguous `(re, im)` float32 pairs — the interleaved layout.  The kernel reinterprets the input data pointer:
+
+```cpp
+const float2* x2 = reinterpret_cast<const float2*>(x.data_ptr<c10::complex<float>>());
+```
+
+This is a safe zero-copy reinterpret: `c10::complex<float>` is guaranteed to be layout-compatible with `float2` (two consecutive floats, no padding).
+
+Thread `l` reads tap `k` as `x2[b*L + l + k]`.  Adjacent threads `l`, `l+1`, ... access adjacent `float2` elements — every warp of 32 threads spans 32 × 8 = 256 contiguous bytes, which maps to a single 256-byte coalesced HBM transaction per tap.  A planar layout would require two independent streams (one for real, one for imaginary) with non-unit stride, halving effective bandwidth utilisation.
+
+### __ldg for weights and bias
+
+Weights `Wr[co*K+k]`, `Wi[co*K+k]` and bias `br[co]`, `bi[co]` are loaded via `__ldg`, which routes through the read-only L1 cache (backed by the texture unit on Volta+).  Since weights are shared identically across all B×L_out threads for a given `co`, they hit in cache after the first warp loads them — no explicit shared-memory staging needed.
+
+`#pragma unroll` on the K loop lets nvcc maximise instruction-level parallelism: it issues multiple `__ldg` loads and FMA instructions in flight while waiting for memory.
+
+### No shared-memory tiling
+
+Shared-memory tiling is explicitly out of scope (CLAUDE.md).  The performance win for this op is fully coalesced HBM access (float2 loads) plus kernel fusion (conv + bias + |z|^2 in one pass, avoiding two intermediate complex tensors).  GEMM-style tile-and-reuse would conflate two distinct optimisation strategies and add complexity without a clear roofline justification for a K=15 filter.
+
+### Namespace decision and collision rationale
+
+The CUDA op is registered in the `fused_iq_cuda` namespace via `TORCH_LIBRARY(fused_iq_cuda, m)`.
+
+The Triton path uses Python's `torch.library.Library("fused_iq", "DEF")` to own the `fused_iq` namespace.  PyTorch's dispatcher permits only one `DEF` owner per namespace.  A second `TORCH_LIBRARY("fused_iq", ...)` block in C++ would trigger a runtime collision error when both extensions are loaded.  Using `fused_iq_cuda` as a distinct namespace avoids the collision and makes it unambiguous in tests which backend is under evaluation:
+
+```python
+torch.ops.fused_iq.fused_stage(...)       # Triton path
+torch.ops.fused_iq_cuda.fused_stage(...)  # CUDA path
+```
+
+### Meta impl as C++ register_fake
+
+`TORCH_LIBRARY_IMPL(fused_iq_cuda, Meta, m)` provides a shape-propagation kernel that returns `at::empty({B, C_out, L_out}, dtype=float32, device=meta)` without executing any real computation.  This is the C++ analogue of Python's `torch.library.register_fake`: both tell the compiler (Dynamo, FX, symbolic shape analysis) how to compute the output shape from input shapes, enabling `torch.compile` to trace through the op without a GPU present.
 
 ## Registration API choice
 
