@@ -23,9 +23,14 @@ flowchart TD
 
 ## Chapters
 
-*None yet — Prompt 1 not started.* Chapters are added at each prompt EXIT,
-following the per-abstraction tutorial format of P1
-(`../neural-channel-estimator/docs/`).
+**Prompt 1 — PASSED** (macOS arm64 CPU baselines; timings PROVISIONAL).
+
+| # | Chapter | Covers |
+|---|---|---|
+| 1 | [IQ Layout Decision](01_iq_layout_decision.md) | Interleaved `complex64`, `float2` coalescing rationale, constraint on Prompts 2/3 |
+| 2 | [Reference Op and Baselines](02_reference_op_and_baselines.md) | Complex conv decomposition, `fused_stage()` parity boundary, `torch.compile` baseline, PROVISIONAL CPU benchmark table |
+
+Chapters 3–6 land at each subsequent prompt EXIT.
 
 Spec-locked decisions worth knowing up front:
 
