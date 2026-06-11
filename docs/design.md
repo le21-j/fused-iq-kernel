@@ -53,7 +53,7 @@ Both the Triton kernel (`kernel_triton/`) and CUDA kernel (`kernel_cuda/`) MUST:
 1. Accept `x: torch.complex64 [B, 1, L]` — interleaved layout, no re-packing.
 2. Implement `conv + bias + |z|²` and return `real [B, 16, L_out]`.
 3. Be parity-tested against `IQClassifier.fused_stage()` with `atol=1e-4` (FP32).
-4. Be registered as `torch.ops.<ns>.iq_fused_stage` via `torch.library.Library` with a `register_fake` meta-kernel.
+4. Be registered as `torch.ops.<ns>.fused_stage` via `torch.library.Library` with a `register_fake` meta-kernel (`<ns>` = `fused_iq` for Triton, `fused_iq_cuda` for the CUDA ext).
 
 ## Triton kernel tiling
 
