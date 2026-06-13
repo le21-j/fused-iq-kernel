@@ -32,6 +32,14 @@ flowchart TD
 
 Chapters 3–6 land at each subsequent prompt EXIT.
 
+**Extension — W4A16 fused dequant+GEMM** (scaffold committed `10b8deb`, GPU run PARKED).
+A second kernel family targeting the inference hiring-signal (guide P3) and open kernel-gap
+issues at NVIDIA kernel-libs / RadixArk / SGLang.
+
+| # | Doc | Covers |
+|---|---|---|
+| W | [W4A16 design](design_w4a16.md) | int4→fp16 group-dequant fused into the matmul, packing/layout, parity contract, baselines to beat (bitsandbytes/GPTQ). 21 parity tests collect on CPU, skip on no-CUDA. |
+
 Spec-locked decisions worth knowing up front:
 
 1. **IQ memory layout** is decided once in Prompt 1 (`docs/design.md`) — every
