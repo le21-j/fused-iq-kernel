@@ -1,0 +1,16 @@
+[project]
+name = "fused-iq-kernel"
+version = "0.0.1"
+requires-python = ">=3.11"
+dependencies = [
+  "torch>=2.2,<3.0",
+  "numpy",
+  "matplotlib",
+]
+
+[project.optional-dependencies]
+# Triton installs only on a CUDA host; kept out of base deps for macOS arm64.
+gpu = ["triton"]
+dev = ["pytest", "ruff"]
+
+# The CUDA C++ extension builds via setup.py on a remote CUDA host (see kernel_cuda/).

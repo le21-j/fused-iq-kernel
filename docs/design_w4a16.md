@@ -1,3 +1,10 @@
+---
+type: kernel-doc
+title: "W4A16 Fused Dequant+GEMM — Design"
+tags: [fused-iq, design, w4a16]
+timestamp: 2026-06-17
+---
+
 # W4A16 Fused Dequant+GEMM — Design
 
 ## 1. Problem statement

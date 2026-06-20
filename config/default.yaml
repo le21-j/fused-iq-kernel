@@ -1,0 +1,14 @@
+# fused-iq-kernel default config — block sizes, dtype, benchmark shapes
+dtype: complex64        # interleaved IQ (decided in Prompt 1, docs/design.md)
+
+kernel:
+  block_size: 256       # Triton BLOCK_SIZE; tune on the profiled GPU
+
+benchmark:
+  # (batch, length) sweep for the 4-way comparison
+  shapes:
+    - [256, 1024]
+    - [512, 2048]
+    - [1024, 4096]
+  warmup_iters: 10
+  measure_iters: 100

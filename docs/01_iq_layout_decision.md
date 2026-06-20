@@ -1,3 +1,10 @@
+---
+type: kernel-doc
+title: "Chapter 1: IQ Layout Decision"
+tags: [fused-iq, iq, layout, decision]
+timestamp: 2026-06-17
+---
+
 # Chapter 1: IQ Layout Decision
 
 **Punchline:** input is `torch.complex64` with shape `[B, 1, L]` — the interleaved

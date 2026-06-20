@@ -1,3 +1,10 @@
+---
+type: kernel-doc
+title: "Chapter 2: Reference Op and Baselines"
+tags: [fused-iq, reference, op, baselines]
+timestamp: 2026-06-17
+---
+
 # Chapter 2: Reference Op and Baselines
 
 **Punchline:** `IQClassifier` defines the correctness oracle for all later kernels;

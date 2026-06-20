@@ -1,3 +1,10 @@
+---
+type: kernel-doc
+title: "Tutorial: fused-iq-kernel"
+tags: [fused-iq, index]
+timestamp: 2026-06-17
+---
+
 # Tutorial: fused-iq-kernel
 
 A **fused complex-IQ classification layer** written four ways — PyTorch eager,
@@ -30,7 +37,14 @@ flowchart TD
 | 1 | [IQ Layout Decision](01_iq_layout_decision.md) | Interleaved `complex64`, `float2` coalescing rationale, constraint on Prompts 2/3 |
 | 2 | [Reference Op and Baselines](02_reference_op_and_baselines.md) | Complex conv decomposition, `fused_stage()` parity boundary, `torch.compile` baseline, PROVISIONAL CPU benchmark table |
 
-Chapters 3–6 land at each subsequent prompt EXIT.
+Chapters 3–6 land at each subsequent prompt EXIT:
+
+| # | Chapter (planned) | Lands at |
+|---|---|---|
+| 3 | Triton kernel | P3-2 EXIT (remote CUDA) |
+| 4 | CUDA C++ kernel | P3-3 EXIT (remote CUDA) |
+| 5 | Custom-op registration + 4-way benchmark + roofline | P3-4 / P3-5 EXIT |
+| 6 | README finalization | P3-6 EXIT |
 
 **Extension — W4A16 fused dequant+GEMM** (scaffold committed `10b8deb`, GPU run PARKED).
 A second kernel family targeting the inference hiring-signal (guide P3) and open kernel-gap

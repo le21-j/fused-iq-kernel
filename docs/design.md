@@ -1,3 +1,10 @@
+---
+type: kernel-doc
+title: "Design decisions"
+tags: [fused-iq, design]
+timestamp: 2026-06-17
+---
+
 # Design decisions
 
 ## (a) IQ layout: Interleaved
